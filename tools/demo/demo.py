@@ -327,8 +327,17 @@ if __name__ == "__main__":
         torch.save(pred, paths.hmr4d_results)
 
     # ===== Render ===== #
-    render_incam(cfg)
-    render_global(cfg)
-    if not Path(paths.incam_global_horiz_video).exists():
+    try:
+        render_incam(cfg)
+        render_global(cfg)
+    except Exception as e:
+        Log.warning(f"[Render] skipped (missing model?): {e}")
+        for p in [cfg.paths.incam_video, cfg.paths.global_video]:
+            if not Path(p).exists():
+                Path(p).touch()
+    if not Path(cfg.paths.incam_global_horiz_video).exists():
         Log.info("[Merge Videos]")
-        merge_videos_horizontal([paths.incam_video, paths.global_video], paths.incam_global_horiz_video)
+        try:
+            merge_videos_horizontal([cfg.paths.incam_video, cfg.paths.global_video], cfg.paths.incam_global_horiz_video)
+        except Exception:
+            Log.warning("[Merge Videos] skipped")
